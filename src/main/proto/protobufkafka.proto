@@ -1,0 +1,21 @@
+/**
+ * Copyright (c) 2015, Turn Inc. All Rights Reserved.
+ * Use of this source code is governed by a BSD-style license that can be found
+ * in the LICENSE file.
+ **/
+
+// Protocol buffer definitions for enveloped Kafka messages.
+//
+// @author srangwala
+
+package util;
+
+option java_package = "com.turn.protobufkafka";
+option java_outer_classname = "ProtoBufKafka";
+option optimize_for = SPEED;
+
+// A message envelope for data sent through Kafka.
+message KafkaMessage {
+	optional bytes payload = 2;
+}
+
