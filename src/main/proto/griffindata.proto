@@ -1,0 +1,21 @@
+/**
+ * Copyright (c) 2015, Turn Inc. All Rights Reserved.
+ * Use of this source code is governed by a BSD-style license that can be found
+ * in the LICENSE file.
+ **/
+
+// Protocol buffer definitions for Griffin data messages.
+//
+// @author srangwala
+
+package data;
+
+option java_package = "com.turn.griffin";
+option java_outer_classname = "GriffinData";
+option optimize_for = SPEED;
+
+message DataMessage {
+	optional uint64 blockSeqNo = 1;
+	optional uint64 byteCount = 2;
+	optional bytes data = 3;
+}

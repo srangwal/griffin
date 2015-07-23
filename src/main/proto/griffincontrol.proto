@@ -1,0 +1,45 @@
+/**
+ * Copyright (c) 2015, Turn Inc. All Rights Reserved.
+ * Use of this source code is governed by a BSD-style license that can be found
+ * in the LICENSE file.
+ **/
+
+// Protocol buffer definitions for Griffin control messages.
+//
+// @author srangwala
+
+package control;
+
+option java_package = "com.turn.griffin";
+option java_outer_classname = "GriffinControl";
+option optimize_for = SPEED;
+
+// A envelope for any message sent to griffin control topic
+message ControlMessage {
+
+  enum MessageType {
+    LATEST_GLOBAL_FILE_INFO = 0;
+    FILE_UPLOADER_REQUEST = 1; // Who is responsible to pushing the file to kafka
+    FILE_UPLOADER_RESPONSE = 2;
+  }
+  optional MessageType msgType = 1 [default = LATEST_GLOBAL_FILE_INFO];
+  optional uint64 timestamp = 2;
+  optional string src = 3;
+  optional string dest = 4;
+  optional bytes payload = 5;
+}
+
+message FileInfo {
+  optional string filename = 1;
+  optional uint64 version = 2;
+  optional string hash = 3;
+  optional string dest = 4;
+  optional string compression = 5;
+  optional uint64 blockSize = 6;
+  optional uint64 blockCount = 7;
+}
+
+message LatestFileInfo {
+  repeated FileInfo latestFiles = 1;
+}
+
