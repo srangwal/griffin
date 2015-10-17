@@ -21,7 +21,7 @@ import java.util.Properties;
 public class GriffinConfig {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinConfig.class);
-    public static final String configFile = "config.properties";
+    public static final String configFile = "griffin.conf";
     private static Properties properties = null;
 
     private GriffinConfig() {
