@@ -1,0 +1,38 @@
+zookeeperlax1:
+  image: wurstmeister/zookeeper
+  ports:
+    - 2181
+
+kafkalax1:
+  image: wurstmeister/kafka:latest
+  #initial_scale: 3
+  ports:
+    - 9092
+  links:
+    - zookeeperlax1:zk
+  environment:
+    KAFKA_ADVERTISED_HOST_NAME: 192.168.1.122
+    KAFKA_CONTROLLED_SHUTDOWN_ENABLE: 'false'
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    KAFKA_NUM_PARTITIONS: 8
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    KAFKA_REBALANCE_BACKOFF_MS: 3000
+    KAFKA_REBALANCE_MAX_RETRIES: 10
+    KAFKA_LOG_RETENTION_MINUTES: 3
+    KAFKA_DELETE_TOPIC_ENABLE: 'true'
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+
+
+griffinlax1:
+  image: srangwal/griffin:latest
+  #initial_scale: 5
+  ports:
+    - 8086   # VisualVm port
+    - 8080   # Rest API port
+  links:
+    - kafkalax1:kafka
+    - zookeeperlax1:zk
+  environment:
+    DC: 'lax1'
+

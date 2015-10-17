@@ -126,6 +126,10 @@ public class GriffinModule implements Griffin {
         controlManager.get().sendFileUploaderRequest(fileInfo);
     }
 
+    /* TODO: add a function that takes a blob of bytes rather than a filename
+       public boolean syncBlob(String blobName, String dest, byte[] bytes) {
+     */
+
     @Override
     public boolean syncBlob(String blobName, String dest, String filepath) {
 
