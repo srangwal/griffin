@@ -2,33 +2,20 @@ group 'com.turn.griffin'
 
 apply plugin: 'application'
 apply plugin: 'com.google.protobuf'
+apply plugin: 'spring-boot'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'docker'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
+group = "srangwal"
 
 
-version = '0.1'
-mainClassName="com.turn.griffin.GriffinDaemon"
-applicationDefaultJvmArgs = ["-Dgreeting.language=en"]
-run {
-    standardInput = System.in
-    if (project.hasProperty('args')) {
-        args project.args.split('\\s+')
-    }
+jar {
+    version = '0.1.0'
+    baseName = 'griffin'
 }
-
-//create a single Jar with all dependencies
-task fatJar(type: Jar) {
-  manifest {
-        attributes 'Implementation-Title': 'Griffin Fat Jar',
-          'Implementation-Version': version,
-          'Main-Class': 'com.turn.griffin.GriffinDaemon'
-    }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
-
 
 //Get protobuf gradle plugin
 buildscript {
@@ -37,7 +24,11 @@ buildscript {
     }
     dependencies {
         /* https://github.com/google/protobuf-gradle-plugin */
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.5.0'
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.5.0")
+        /* Spring framework */
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE")
+        /* Docker plugin */
+        classpath("se.transmode.gradle:gradle-docker:1.2")
     }
 }
 
@@ -70,6 +61,28 @@ dependencies {
     compile       group: 'com.101tec',           name: 'zkclient',          version: '0.3'
     compile       group: 'org.apache.kafka',     name: 'kafka_2.9.2',       version: '0.8.2.0'
     compile       group: 'org.apache.kafka',     name: 'kafka-clients',     version: '0.8.2.0'
+    compile       group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+    compile       group: 'com.google.code.gson', name: 'gson', version: '2.4'
+}
+
+configurations.all {
+    exclude module: 'slf4j-log4j12'
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+  push = false
+  applicationName = jar.baseName
+  dockerfile = file('src/main/docker/Dockerfile')
+  doFirst {
+    copy {
+      from jar
+      into stageDir
+    }
+    copy {
+      from file("src/main/docker/run")
+      into stageDir
+    }
+  }
 }
 
 

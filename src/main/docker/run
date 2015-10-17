@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -z "$ZK_PORT_2181_TCP_ADDR" ] || [ -z "$ZK_PORT_2181_TCP_PORT" ]; then
+  echo "Zookeeper is not set"
+  exit 1
+else
+  ZKSERVER=$ZK_PORT_2181_TCP_ADDR:$ZK_PORT_2181_TCP_PORT/
+fi
+
+KAFKABROKERS=$(env | egrep '^KAFKA.*_PORT_9092_TCP=' | tr '/' ' ' | cut -d' ' -f3 | sort | uniq |xargs | tr ' ' ',')
+if [ -z "$KAFKABROKERS" ]; then
+  echo "Kafka brokers unknown"
+  exit 1
+fi
+
+printf " Griffin.Compression:NONE
+Griffin.ResourceDiscoveryInterval: 10000
+Griffin.Error.Email.Recipients: srangwal@gmail.com
+Griffin.ZkServers:$ZKSERVER
+Griffin.KafkaBrokersList:$KAFKABROKERS
+serverid:griffin-${RANDOM}
+dcname:${DC}
+" > /etc/service/griffin/griffin.conf
+
+# `/sbin/setuser griffin` runs the given command as the user `griffin`.
+# If you omit that part, the command will be run as root.
+exec /sbin/setuser griffin java -Djava.security.egd=file:/dev/./urandom -jar /opt/griffin/griffin-0.1.0.jar >>/var/log/griffin.log 2>&1
