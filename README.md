@@ -101,11 +101,11 @@ $> curl -i http://$(docker port griffin_griffinlax1_3 8080)/griffin/localrepo
 
 #### PUT,POST /localrepo/
   Push a given file to the specified set of machines
+  
   **Parameters**
-  blobname(string)   required   A name by which this blob of bytes will be referred by the repository
-  dest(string)       required   A regular expression specifying the destination. This blob will be
-                                downloaded by any server whose ```serverid``` matches the regex
-  file(form)         required   Multi-part content specifying the data bytes
+  - blobname(string)   required   A name by which this blob of bytes will be referred by the repository
+  - dest(string)       required   A regular expression specifying the destination. This blob will be downloaded by any server whose ```serverid``` matches the regex
+  - file(form)         required   Multi-part content specifying the data bytes
 
 
 #### GET /globalrepo
@@ -113,12 +113,11 @@ $> curl -i http://$(docker port griffin_griffinlax1_3 8080)/griffin/localrepo
 
 #### PUT,POST /globalrepo/
   Push a given file to the specified set of machines
-  **Parameters**
-  blobname(string)   required   A name by which this blob of bytes will be referred by the repository
-  dest(string)       required   A regular expression specifying the destination. This blob will be
-                                downloaded by any server whose ```serverid``` matches the regex
-  file(form)         required   Multi-part content specifying the data bytes
 
+  **Parameters**
+  - blobname(string)   required   A name by which this blob of bytes will be referred by the repository
+  - dest(string)       required   A regular expression specifying the destination. This blob will be downloaded by any server whose ```serverid``` matches the regex
+  - file(form)         required   Multi-part content specifying the data bytes
 
 #### GET /missing
   List all the files in global repository that is supposed to be in the local repository but has not
