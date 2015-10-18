@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk7
+
+sudo: required
+
+services:
+  - docker
+
+install:
+  - wget --no-check-certificate https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+  - tar -xzvf protobuf-2.5.0.tar.gz
+  - cd protobuf-2.5.0 && ./configure --prefix=/usr && make && sudo make install && cd -
+
+script:
+  - gradle check
+  - gradle buildDocker
+
+after_success:
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker push srangwal/griffin
+

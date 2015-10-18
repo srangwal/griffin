@@ -85,7 +85,6 @@ task buildDocker(type: Docker, dependsOn: build) {
   }
 }
 
-
 test {
   // enable TestNG support (default is JUnit)
   useTestNG()
