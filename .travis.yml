@@ -13,6 +13,7 @@ install:
   - cd protobuf-2.5.0 && ./configure --prefix=/usr && make && sudo make install && cd -
 
 script:
+  - gradle build
   - gradle check
   - gradle buildDocker
 
