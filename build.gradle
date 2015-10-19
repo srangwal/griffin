@@ -6,6 +6,7 @@ apply plugin: 'spring-boot'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'docker'
+apply plugin: 'findbugs'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -13,60 +14,61 @@ group = "srangwal"
 
 
 jar {
-    version = '0.1.0'
-    baseName = 'griffin'
+  version = '0.1.0'
+  baseName = 'griffin'
 }
 
 //Get protobuf gradle plugin
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        /* https://github.com/google/protobuf-gradle-plugin */
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.5.0")
-        /* Spring framework */
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE")
-        /* Docker plugin */
-        classpath("se.transmode.gradle:gradle-docker:1.2")
-    }
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+
+    /* https://github.com/google/protobuf-gradle-plugin */
+    classpath("com.google.protobuf:protobuf-gradle-plugin:0.5.0")
+
+    /* Spring framework */
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE")
+
+    /* Docker plugin */
+    classpath("se.transmode.gradle:gradle-docker:1.2")
+  }
 }
 
 // Get dependencies from Maven central repository
 repositories {
-    mavenCentral()
-    jcenter()
+  mavenCentral()
+  jcenter()
 }
 
 // Project dependencies
 dependencies {
-    compile fileTree(dir: 'lib', includes: ['*.jar'])
+  testCompile group: 'org.testng', name: 'testng', version: '6.8.8'
 
-    testCompile   group: 'org.testng',           name: 'testng',            version: '6.8.8'
+  compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
+  compile group: 'com.google.api.client', name: 'google-api-client-util', version: '1.2.3-alpha'
 
-    compile       group: 'com.google.code.findbugs',  name: 'jsr305',                   version: '3.0.0'
-    compile       group: 'com.google.api.client',     name: 'google-api-client-util',   version: '1.2.3-alpha'
+  compile group: 'com.google.guava', name: 'guava', version: '16.0+'
+  compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6+'
+  compile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.0.4.1+'
 
-    compile       group: 'com.google.guava',     name: 'guava',             version: '16.0+'
-    compile       group: 'org.slf4j',            name: 'slf4j-log4j12',     version: '1.7.6+'
-    compile       group: 'org.xerial.snappy',    name: 'snappy-java',       version: '1.0.4.1+'
+  compile group: 'commons-io', name: 'commons-io', version: '2.4+'
+  compile group: 'commons-codec', name: 'commons-codec', version: '1.1+'
+  compile group: 'org.apache.commons', name: 'commons-email', version: '1.4+'
+  compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4+'
+  compile group: 'org.apache.commons', name: 'commons-compress', version: '1.9+'
 
-    compile       group: 'commons-io',           name: 'commons-io',        version: '2.4+'
-    compile       group: 'commons-codec',        name: 'commons-codec',     version: '1.1+'
-    compile       group: 'org.apache.commons',   name: 'commons-email',     version: '1.4+'
-    compile       group: 'org.apache.commons',   name: 'commons-lang3',     version: '3.4+'
-    compile       group: 'org.apache.commons',   name: 'commons-compress',  version: '1.9+'
-
-    compile       group: 'com.google.protobuf',  name: 'protobuf-java',     version: '2.5.0'
-    compile       group: 'com.101tec',           name: 'zkclient',          version: '0.3'
-    compile       group: 'org.apache.kafka',     name: 'kafka_2.9.2',       version: '0.8.2.0'
-    compile       group: 'org.apache.kafka',     name: 'kafka-clients',     version: '0.8.2.0'
-    compile       group: 'org.springframework.boot', name: 'spring-boot-starter-web'
-    compile       group: 'com.google.code.gson', name: 'gson', version: '2.4'
+  compile group: 'com.google.protobuf', name: 'protobuf-java', version: '2.5.0'
+  compile group: 'com.101tec', name: 'zkclient', version: '0.3'
+  compile group: 'org.apache.kafka', name: 'kafka_2.9.2', version: '0.8.2.0'
+  compile group: 'org.apache.kafka', name: 'kafka-clients', version: '0.8.2.0'
+  compile group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+  compile group: 'com.google.code.gson', name: 'gson', version: '2.4'
 }
 
 configurations.all {
-    exclude module: 'slf4j-log4j12'
+  exclude module: 'slf4j-log4j12'
 }
 
 task buildDocker(type: Docker, dependsOn: build) {
@@ -85,18 +87,44 @@ task buildDocker(type: Docker, dependsOn: build) {
   }
 }
 
+// FINDBUGS
+findbugs {
+  effort = "max"
+  ignoreFailures = true
+}
+
+tasks.withType(FindBugs) {
+
+  // TODO: Make sure this is not excluding GriffinControlManager
+  def excludeGriffinControl = 'com/turn/griffin/GriffinControl$'
+  def excludeGriffinData = 'com/turn/griffin/GriffinData$'
+  def excludeProtobufFiles = 'com/turn/protobufkafka/'
+  classes = classes.filter {
+    !( it.path.contains(excludeProtobufFiles) ||
+       it.path.contains(excludeGriffinControl) ||
+       it.path.contains(excludeGriffinData))
+  }
+
+  // Generate HTML output for findbugs
+  reports {
+    xml.enabled = false
+    html.enabled = true
+  }
+}
+
+
 test {
   // enable TestNG support (default is JUnit)
   useTestNG()
 
   // listen to events in the test execution lifecycle
   beforeTest { descriptor ->
-     logger.lifecycle("Running test: " + descriptor)
+    logger.lifecycle("Running test: " + descriptor)
   }
 
   // listen to standard out and standard error of the test JVM(s)
   onOutput { descriptor, event ->
-     logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+    logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
   }
 
 }

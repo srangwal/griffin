@@ -77,10 +77,10 @@ public class GriffinService {
             stream.write(bytes);
             stream.close();
             module.get().syncBlob(blobname, dest, tempFile.getAbsolutePath());
-            return String.format("Pushed file as blob %s to destination %s\n", blobname, dest);
+            return String.format("Pushed file as blob %s to destination %s%n", blobname, dest);
         } catch (Exception e) {
-            logger.error(String.format("POST request failed\n%s\n", ExceptionUtils.getStackTrace(e)));
-            return String.format("Unable to push file as blob %s to destination %s\n", blobname, dest);
+            logger.error(String.format("POST request failed%n%s%n", ExceptionUtils.getStackTrace(e)));
+            return String.format("Unable to push file as blob %s to destination %s%n", blobname, dest);
         }
     }
 

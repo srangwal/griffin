@@ -25,11 +25,12 @@ public class GriffinKafkaTopicNameUtil {
 
     /* Data Topics */
     public static String getDataTopicConsumerGroupId(String filename, long version, String[] suffixes) {
-        String groupId = getDataTopicNameForProducer(filename, version);
+        StringBuilder groupId = new StringBuilder(getDataTopicNameForProducer(filename, version));
         for (String suffix: suffixes) {
-            groupId += KAFKA_TOPIC_SEPARATOR + suffix;
+            groupId.append(KAFKA_TOPIC_SEPARATOR);
+            groupId.append(suffix);
         }
-        return groupId;
+        return groupId.toString();
     }
 
     public static String getDataTopicNamePattern(String filename) {
@@ -60,11 +61,12 @@ public class GriffinKafkaTopicNameUtil {
 
     /* Control Topic */
     public static String getControlTopicConsumerGroupId(String[] suffixes) {
-        String groupId = getControlTopicNameForProducer();
+        StringBuilder groupId = new StringBuilder(getControlTopicNameForProducer());
         for (String suffix: suffixes) {
-            groupId += KAFKA_TOPIC_SEPARATOR + suffix;
+            groupId.append(KAFKA_TOPIC_SEPARATOR);
+            groupId.append(suffix);
         }
-        return groupId;
+        return groupId.toString();
     }
 
     public static String getControlTopicNameForConsumer() {

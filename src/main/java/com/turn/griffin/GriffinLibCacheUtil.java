@@ -229,8 +229,8 @@ public class GriffinLibCacheUtil {
                         globalFileInfo.toString().replaceAll(System.getProperty("line.separator"), " ")));
 
                 String subject = String.format("ALERT: File info mismatch for file %s", filename);
-                String body = String.format("Action: Received file info does not match the locally known file info\n" +
-                                "Received file info %s\n Locally known file info %s\n",
+                String body = String.format("Action: Received file info does not match the locally known file info%n" +
+                                "Received file info %s%n Locally known file info %s%n",
                         fileInfo.toString().replaceAll(System.getProperty("line.separator"), " "),
                         globalFileInfo.toString().replaceAll(System.getProperty("line.separator"), " "));
                 GriffinModule.emailAlert(subject, body);
