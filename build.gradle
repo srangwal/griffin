@@ -78,10 +78,8 @@ task buildDocker(type: Docker, dependsOn: build) {
   doFirst {
     copy {
       from jar
-      into stageDir
-    }
-    copy {
       from file("src/main/docker/run")
+      from file("src/main/docker/application.properties")
       into stageDir
     }
   }
@@ -100,9 +98,9 @@ tasks.withType(FindBugs) {
   def excludeGriffinData = 'com/turn/griffin/GriffinData$'
   def excludeProtobufFiles = 'com/turn/protobufkafka/'
   classes = classes.filter {
-    !( it.path.contains(excludeProtobufFiles) ||
-       it.path.contains(excludeGriffinControl) ||
-       it.path.contains(excludeGriffinData))
+      !( it.path.contains(excludeProtobufFiles) ||
+          it.path.contains(excludeGriffinControl) ||
+          it.path.contains(excludeGriffinData))
   }
 
   // Generate HTML output for findbugs

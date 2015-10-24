@@ -3,6 +3,7 @@ MAINTAINER srangwal@gmail.com
 
 RUN mkdir /etc/service/griffin
 COPY run /etc/service/griffin/run
+COPY application.properties /etc/service/griffin/application.properties
 
 RUN groupadd -r griffin && useradd -r -m -g griffin griffin
 RUN mkdir /opt/griffin && chown -R griffin.griffin /opt/griffin

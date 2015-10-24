@@ -44,7 +44,7 @@ public class GriffinService {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
     }
 
-    @RequestMapping(value = "", method = RequestMethod.GET)
+    @RequestMapping(method = RequestMethod.GET)
     public @ResponseBody String getHelp() {
         /* TODO: Change it to REST API format */
        return "\t/localrepo List of all the files in local repository\n" +
@@ -54,13 +54,20 @@ public class GriffinService {
 
     @RequestMapping(value = "/localrepo", method = RequestMethod.GET)
     public @ResponseBody String getLocalRepo() {
+        /* TODO: pretty print repo info */
         return gson.toJson(libCacheManager.get().getLatestLocalFileInfo().get()) + "\n";
+    }
+
+    @RequestMapping(value="/missingfiles", method = RequestMethod.GET)
+    public @ResponseBody String getMissingFiles() {
+        /* TODO: pretty print repo info */
+        return gson.toJson(libCacheManager.get().findFilesToDownload()) + "\n";
     }
 
     @RequestMapping(value = {"/localrepo", "/globalrepo"}, method = {RequestMethod.POST, RequestMethod.PUT})
     public @ResponseBody String pushToRepo(@RequestParam(value="blobname", required=true) String blobname,
-                             @RequestParam(value="dest", required=true) String dest,
-                             @RequestParam(value="file", required=true) MultipartFile file) {
+             @RequestParam(value="dest", required=true) String dest,
+             @RequestParam(value="file", required=true) MultipartFile file) {
 
         if (!StringUtils.isNotBlank(blobname)) {
             return "Blobname cannot be empty\n";
@@ -81,18 +88,15 @@ public class GriffinService {
         } catch (Exception e) {
             logger.error(String.format("POST request failed%n%s%n", ExceptionUtils.getStackTrace(e)));
             return String.format("Unable to push file as blob %s to destination %s%n", blobname, dest);
-        }
+        } // TODO: Delete tempFile
     }
 
     @RequestMapping(value="/globalrepo", method = RequestMethod.GET)
     public @ResponseBody String getGlobalRepo() {
+        /* TODO: pretty print repo info */
         return gson.toJson(libCacheManager.get().getLatestGlobalFileInfo().get()) + "\n";
     }
 
 
-    @RequestMapping(value="/missing", method = RequestMethod.GET)
-    public @ResponseBody String getMissingFiles() {
-        return gson.toJson(libCacheManager.get().findFilesToDownload()) + "\n";
-    }
 
 }
