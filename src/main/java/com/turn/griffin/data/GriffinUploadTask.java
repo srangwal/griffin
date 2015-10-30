@@ -147,8 +147,8 @@ public class GriffinUploadTask implements Runnable {
                     logger.warn(String.format("Unable to upload %s version %s after %s attempts",
                             filename, fileVersion, uploadAttempts));
                     String subject = String.format("WARNING: GriffinUploadTask failed for blob:%s", filename);
-                    String body = String.format("Action: GriffinUploadTask failed for blob:%s version:%s\n" +
-                            "Reason: Unable to upload after %s attempts\n", filename, fileVersion, uploadAttempts);
+                    String body = String.format("Action: GriffinUploadTask failed for blob:%s version:%s%n" +
+                            "Reason: Unable to upload after %s attempts%n", filename, fileVersion, uploadAttempts);
                     GriffinModule.emailAlert(subject, body);
                     break;
                 }
@@ -183,8 +183,8 @@ public class GriffinUploadTask implements Runnable {
         } catch (Exception e) {
             logger.error(String.format("Unable to upload file %s to %s", filename, dataTopicNameForProducer), e);
             String subject = String.format("WARNING: GriffinUploadTask failed for blob:%s", filename);
-            String body = String.format("Action: GriffinUploadTask failed for blob:%s version:%s\n" +
-                    "Reason: Exception in GriffinUploadTask\n %s", filename, fileVersion,
+            String body = String.format("Action: GriffinUploadTask failed for blob:%s version:%s%n" +
+                    "Reason: Exception in GriffinUploadTask%n %s", filename, fileVersion,
                     Throwables.getStackTraceAsString(e));
             GriffinModule.emailAlert(subject, body);
         }  finally {

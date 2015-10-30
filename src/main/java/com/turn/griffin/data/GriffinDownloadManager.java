@@ -46,7 +46,7 @@ public class GriffinDownloadManager implements Runnable {
     private final int deleteTopicsEveryNRuns;
 
 
-    protected static Map<String, ScheduledFuture<?>> ONGOING_DOWNLOADS = new ConcurrentHashMap<String, ScheduledFuture<?>>();
+    protected static final Map<String, ScheduledFuture<?>> ONGOING_DOWNLOADS = new ConcurrentHashMap<String, ScheduledFuture<?>>();
     private GriffinDataManager dataManager;
 
     public GriffinDownloadManager(GriffinDataManager dataManager) {

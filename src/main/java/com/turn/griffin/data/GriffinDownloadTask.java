@@ -95,8 +95,8 @@ public class GriffinDownloadTask implements Runnable {
         } catch (IOException ioe) {
             logger.warn(String.format("Unable to create tmp cache for %s", fileInfo), ioe);
             String subject = String.format("ALERT: GriffinDownloadTask failed for blob:%s", filename);
-            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                    "Reason: Unable to create tmp cache\n %s", filename, fileVersion,
+            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                    "Reason: Unable to create tmp cache%n %s", filename, fileVersion,
                     Throwables.getStackTraceAsString(ioe));
             GriffinModule.emailAlert(subject, body);
             return;
@@ -139,8 +139,8 @@ public class GriffinDownloadTask implements Runnable {
                             filename, fileVersion, downloadedBitmap));
 
                     String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
-                    String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                            "Reason: Unable to download the blob after repeated attempts\n" +
+                    String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                            "Reason: Unable to download the blob after repeated attempts%n" +
                             "Available bitmap %s", filename, fileVersion, downloadedBitmap);
                     GriffinModule.emailAlert(subject, body);
                     return;
@@ -170,8 +170,8 @@ public class GriffinDownloadTask implements Runnable {
             if( !libCacheManager.finishTempCachePreparation(fileInfo)) {
                 logger.warn(String.format("File verification failed for %s version %s", filename, fileVersion));
                 String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
-                String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                        "Reason: Downloaded file verification failed\n", filename, fileVersion);
+                String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                        "Reason: Downloaded file verification failed%n", filename, fileVersion);
                 GriffinModule.emailAlert(subject, body);
                 return;
             }
@@ -183,8 +183,8 @@ public class GriffinDownloadTask implements Runnable {
             } catch (IOException ioe) {
                 logger.info(String.format("Unable to move TempCache to LibCache for %s", fileInfo));
                 String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
-                String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                        "Reason: Unable to move TempCache to LibCache\n %s", filename, fileVersion,
+                String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                        "Reason: Unable to move TempCache to LibCache%n %s", filename, fileVersion,
                         Throwables.getStackTraceAsString(ioe));
                 GriffinModule.emailAlert(subject, body);
             }
@@ -194,8 +194,8 @@ public class GriffinDownloadTask implements Runnable {
         } catch (ZkTimeoutException zkte) {
             logger.warn(String.format("Unable to download %s %s", filename, fileVersion), zkte);
             String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
-            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                            "Reason: Unable to connect to Zookeeper\n %s", filename, fileVersion,
+            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                            "Reason: Unable to connect to Zookeeper%n %s", filename, fileVersion,
                     Throwables.getStackTraceAsString(zkte));
             // Suppress this alert for now
             //GriffinModule.emailAlert(subject, body);
@@ -203,8 +203,8 @@ public class GriffinDownloadTask implements Runnable {
         } catch (Exception e) {
             logger.warn(String.format("Unable to download %s %s", filename, fileVersion), e);
             String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
-            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s\n" +
-                            "Reason: Exception in GriffinDownloadTask\n %s", filename, fileVersion,
+            String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
+                            "Reason: Exception in GriffinDownloadTask%n %s", filename, fileVersion,
                             Throwables.getStackTraceAsString(e));
             GriffinModule.emailAlert(subject, body);
 

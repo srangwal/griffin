@@ -147,8 +147,8 @@ public class GriffinModule implements Griffin {
             logger.warn(String.format("File %s is greater the maximum allowed size of %s",
                     filepath, getMaxBlobSizePermitted()));
             String subject = String.format("ALERT: Griffin syncBlob rejected blob:%s", blobName);
-            String body = String.format("Action: syncBlob rejected blob:%s filepath:%s\n" +
-                    "Reason: Size of %s bytes does not lie in (0,%s] \n", blobName, filepath,
+            String body = String.format("Action: syncBlob rejected blob:%s filepath:%s%n" +
+                    "Reason: Size of %s bytes does not lie in (0,%s] %n", blobName, filepath,
                     file.length(), getMaxBlobSizePermitted());
             emailAlert(subject, body);
             return false;
@@ -163,8 +163,8 @@ public class GriffinModule implements Griffin {
         } else {
             logger.error(String.format("Unable to add %s with destination %s to local repository ", blobName, dest));
             String subject = String.format("ALERT: Griffin syncBlob rejected blob:%s", blobName);
-            String body = String.format("Action: syncBlob rejected blob:%s filepath:%s\n" +
-                    "Reason: unable to add file to local repository\n", blobName, filepath);
+            String body = String.format("Action: syncBlob rejected blob:%s filepath:%s%n" +
+                    "Reason: unable to add file to local repository%n", blobName, filepath);
             emailAlert(subject, body);
             return false;
         }
