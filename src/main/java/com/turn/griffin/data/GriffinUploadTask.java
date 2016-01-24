@@ -74,7 +74,7 @@ public class GriffinUploadTask implements Runnable {
         Optional<GriffinConsumer> consumer = Optional.absent();
         BitSet availableBlockBitmap = new BitSet((int) blockCount);
         try {
-            BlockingQueue<byte[]> dataQueue = new ArrayBlockingQueue<byte[]>(GriffinDownloadTask.DOWNLOAD_CONSUMER_QUEUE_SIZE);
+            BlockingQueue<byte[]> dataQueue = new ArrayBlockingQueue<>(GriffinDownloadTask.DOWNLOAD_CONSUMER_QUEUE_SIZE);
             Properties properties = new Properties();
             properties.put("auto.offset.reset", "smallest");
 
