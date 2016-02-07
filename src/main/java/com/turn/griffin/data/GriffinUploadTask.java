@@ -23,6 +23,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.BitSet;
 import java.util.Properties;
@@ -180,7 +182,7 @@ public class GriffinUploadTask implements Runnable {
             logger.info(String.format("Ending file upload for file %s version %s to %s",
                     filename, fileVersion, dataTopicNameForProducer));
             libCacheUploadFile.close();
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             logger.error(String.format("Unable to upload file %s to %s", filename, dataTopicNameForProducer), e);
             String subject = String.format("WARNING: GriffinUploadTask failed for blob:%s", filename);
             String body = String.format("Action: GriffinUploadTask failed for blob:%s version:%s%n" +

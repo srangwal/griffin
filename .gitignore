@@ -11,4 +11,7 @@ gradle-app.setting
 # Ignore intellij files
 .idea
 *.iml
+griffin.ipr
+griffin.iws
 
+src/generated

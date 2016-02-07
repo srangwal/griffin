@@ -434,7 +434,7 @@ public class GriffinLibCacheUtil {
                     /* Store file for forensics */
                     String tempDir = FilenameUtils.concat(getTempCacheDirectory(), fileInfo.getFilename());
                     FileUtils.copyDirectoryToDirectory(new File(tempDir), new File(getForensicCacheDirectory()));
-                } catch (Exception e) {
+                } catch (IOException e) {
                     // Ignore
                 }
             }
