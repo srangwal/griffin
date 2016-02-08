@@ -39,9 +39,9 @@ done
 ```
 Since we have not pushed any data via griffin yet the output of the above command would be empty
 
-We will now upload a file(`build.gradle`) to one of the griffin node, namely griffin_griffinlax1_1, and then ask griffin to
+We will now upload a file(`build.gradle`) to one of the griffin node, namely `griffin_griffinlax1_1`, and then ask griffin to
 replicate it to all the other griffin nodes (`dest='.*'`). We would like this file to be named `gradle`
-(`blogname=gradle`) on all the griffin nodes.
+(`blobname=gradle`) on all the griffin nodes.
 ```sh
 curl -i# -F blobname=gradle -F dest='.*' -F file=@build.gradle http://$(docker port griffin_griffinlax1_1 8080)/griffin/localrepo
 ```
