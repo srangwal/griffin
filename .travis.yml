@@ -16,7 +16,6 @@ script:
   - gradle build
   - gradle check
   - gradle javadoc
-  - gradle idea
   - gradle buildDocker
 
 after_success:
