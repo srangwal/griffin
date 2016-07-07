@@ -25,13 +25,13 @@ buildscript {
   dependencies {
 
     /* https://github.com/google/protobuf-gradle-plugin */
-    classpath("com.google.protobuf:protobuf-gradle-plugin:0.5.0")
+    classpath "com.google.protobuf:protobuf-gradle-plugin:0.7.6"
 
     /* Spring framework */
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE")
+    classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE"
 
     /* Docker plugin */
-    classpath("se.transmode.gradle:gradle-docker:1.2")
+    classpath "se.transmode.gradle:gradle-docker:1.2"
   }
 }
 

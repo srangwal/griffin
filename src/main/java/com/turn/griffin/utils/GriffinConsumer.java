@@ -25,7 +25,6 @@ import java.util.concurrent.Executors;
  * <p>
  * A class that collects all messages for a given topic list (given as a regex) into a specified queue
  * using a local thread pool.
- * <p/>
  *
  * @author srangwala
  */
