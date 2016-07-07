@@ -1,6 +1,8 @@
 language: java
 jdk:
   - openjdk7
+  - oraclejdk7
+
 
 sudo: required
 
@@ -11,6 +13,11 @@ install:
   - wget --no-check-certificate https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
   - tar -xzvf protobuf-2.5.0.tar.gz
   - cd protobuf-2.5.0 && ./configure --prefix=/usr && make && sudo make install && cd -
+  # Download desired version of Gradle
+  - wget https://services.gradle.org/distributions/gradle-2.14-bin.zip
+  - unzip -qq gradle-2.14-bin.zip
+  - export GRADLE_HOME=$PWD/gradle-2.14
+  - export PATH=$GRADLE_HOME/bin:$PATH
 
 script:
   - gradle build
