@@ -10,7 +10,7 @@ services:
   - docker
 
 install:
-  - wget --no-check-certificate https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+  - wget --no-check-certificate https://github.com/google/protobuf/releases/download/v2.5.0/protobuf-2.5.0.tar.gz
   - tar -xzvf protobuf-2.5.0.tar.gz
   - cd protobuf-2.5.0 && ./configure --prefix=/usr && make && sudo make install && cd -
   # Download desired version of Gradle
