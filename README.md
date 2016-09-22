@@ -1,5 +1,6 @@
 # Griffin
 [![Build Status](https://travis-ci.org/srangwal/griffin.svg?branch=master)](https://travis-ci.org/srangwal/griffin.svg?branch=master)
+[![](https://images.microbadger.com/badges/version/srangwal/griffin.svg)](https://microbadger.com/images/srangwal/griffin "Get your own version badge on microbadger.com")
 
 Griffin is a library to replicate a blob of data to a cluster of machines spanning across
 multiple data centers.
