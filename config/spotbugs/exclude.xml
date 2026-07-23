@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <Match>
+    <Class name="~com\.turn\.protobufkafka\..*" />
+  </Match>
+  <Match>
+    <Class name="~com\.turn\.griffin\.GriffinControl\$.*" />
+  </Match>
+  <Match>
+    <Class name="~com\.turn\.griffin\.GriffinData\$.*" />
+  </Match>
+</FindBugsFilter>

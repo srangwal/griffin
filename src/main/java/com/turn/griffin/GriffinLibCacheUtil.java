@@ -5,7 +5,6 @@
  **/
 package com.turn.griffin;
 
-import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -384,7 +383,7 @@ public class GriffinLibCacheUtil {
 
     public Map<String, String> getLocalFileLatestVersion() {
 
-        Map<String, String> filenameAndVersion = new ArrayMap<>();
+        Map<String, String> filenameAndVersion = new LinkedHashMap<>();
 
         Map<String, File> localFileMap = getLocalFileMap();
         for (Map.Entry<String, File> entry : localFileMap.entrySet()) {

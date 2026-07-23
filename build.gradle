@@ -1,164 +1,126 @@
-group 'com.turn.griffin'
-
-apply plugin: 'application'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'spring-boot'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'docker'
-apply plugin: 'findbugs'
-
-sourceCompatibility = 1.7
-group = "srangwal"
-
-
-jar {
-  version = '0.1.0'
-  baseName = 'griffin'
+plugins {
+  id 'application'
+  id 'idea'
+  id 'eclipse'
+  id 'org.springframework.boot' version '4.1.0'
+  id 'com.google.protobuf' version '0.10.0'
+  id 'com.github.spotbugs' version '6.5.9'
+  id 'com.bmuschko.docker-remote-api' version '10.0.0'
 }
 
-//Get protobuf gradle plugin
-buildscript {
-  repositories {
-    mavenCentral()
-  }
-  dependencies {
+group = 'srangwal'
+version = '0.1.0'
 
-    /* https://github.com/google/protobuf-gradle-plugin */
-    classpath("com.google.protobuf:protobuf-gradle-plugin:0.5.0")
-
-    /* Spring framework */
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.6.RELEASE")
-
-    /* Docker plugin */
-    classpath("se.transmode.gradle:gradle-docker:1.2")
-  }
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
-// Get dependencies from Maven central repository
+tasks.withType(JavaCompile).configureEach {
+  options.release = 17
+}
+
+application {
+  mainClass = 'com.turn.griffin.GriffinApplication'
+}
+
 repositories {
   mavenCentral()
-  jcenter()
 }
 
-// Project dependencies
 dependencies {
-  testCompile group: 'org.testng', name: 'testng', version: '6.8.8'
+  testImplementation group: 'org.testng', name: 'testng', version: '7.12.0'
 
-  compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
-  compile group: 'com.google.api.client', name: 'google-api-client-util', version: '1.2.3-alpha'
+  implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
+  implementation group: 'com.google.guava', name: 'guava', version: '33.6.0-jre'
+  implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6+'
+  implementation group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.10.8'
 
-  compile group: 'com.google.guava', name: 'guava', version: '16.0+'
-  compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6+'
-  compile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.0.4.1+'
+  implementation group: 'commons-io', name: 'commons-io', version: '2.22.0'
+  implementation group: 'commons-codec', name: 'commons-codec', version: '1.22.0'
+  implementation group: 'org.apache.commons', name: 'commons-email', version: '1.6.0'
+  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
+  implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.28.0'
 
-  compile group: 'commons-io', name: 'commons-io', version: '2.4+'
-  compile group: 'commons-codec', name: 'commons-codec', version: '1.1+'
-  compile group: 'org.apache.commons', name: 'commons-email', version: '1.4+'
-  compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4+'
-  compile group: 'org.apache.commons', name: 'commons-compress', version: '1.9+'
-
-  compile group: 'com.google.protobuf', name: 'protobuf-java', version: '2.5.0'
-  compile group: 'com.101tec', name: 'zkclient', version: '0.3'
-  compile group: 'org.apache.kafka', name: 'kafka_2.9.2', version: '0.8.2.0'
-  compile group: 'org.apache.kafka', name: 'kafka-clients', version: '0.8.2.0'
-  compile group: 'org.springframework.boot', name: 'spring-boot-starter-web'
-  compile group: 'com.google.code.gson', name: 'gson', version: '2.4'
+  implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '4.35.1'
+  implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '4.3.1'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc', version: '4.1.0'
+  implementation group: 'com.google.code.gson', name: 'gson', version: '2.14.0'
 }
 
 configurations.all {
   exclude module: 'slf4j-log4j12'
 }
 
-def generateProtoBufDir = "$projectDir/src/generated"
+docker {
+  url = providers.environmentVariable('DOCKER_HOST').orElse('unix:///var/run/docker.sock').get()
+}
+
 protobuf {
-  /* Location for protobuf generated files */
-  generatedFilesBaseDir = generateProtoBufDir
-}
-
-clean {
-  /* Clean generated files as well */
-  delete generateProtoBufDir
-}
-
-idea {
-  project {
-    jdkName = '1.7'
-    languageLevel = '1.7'
-    vcs = 'Git'
+  protoc {
+    artifact = 'com.google.protobuf:protoc:4.35.1'
   }
-  module {
-    /* Add protobuf generated files to sources for idea file */
-    sourceDirs += file(generateProtoBufDir)
-  }
-}
-
-javadoc {
-  dependsOn tasks.build
-
-  options.memberLevel = JavadocMemberLevel.PACKAGE
-  options.noQualifiers = ["all"]
-
-  /* Add protobuf generated files to sources for javadoc */
-  source = [sourceSets.main.allJava, files(generateProtoBufDir)]
-  classpath = configurations.compile
-}
-
-
-task buildDocker(type: Docker, dependsOn: build) {
-  description 'Build a Griffin docker image'
-  push = false
-  applicationName = jar.baseName
-  dockerfile = file('src/main/docker/Dockerfile')
-  doFirst {
-    copy {
-      from jar
-      from file("src/main/docker/run")
-      from file("src/main/docker/application.properties")
-      into stageDir
+  generateProtoTasks {
+    all().configureEach { task ->
+      def grpcPlugin = task.plugins.findByName('grpc')
+      if (grpcPlugin != null) {
+        task.plugins.remove(grpcPlugin)
+      }
     }
   }
 }
 
-// FINDBUGS
-findbugs {
-  effort = "max"
+jar {
+  archiveBaseName = 'griffin'
+}
+
+def dockerStageDir = layout.buildDirectory.dir('docker')
+
+tasks.register('stageDocker', Sync) {
+  dependsOn bootJar
+  from bootJar
+  from file('src/main/docker/run')
+  from file('src/main/docker/application.properties')
+  from file('src/main/docker/Dockerfile')
+  into dockerStageDir
+}
+
+tasks.register('buildDocker', com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
+  description = 'Build a Griffin docker image'
+  dependsOn tasks.named('stageDocker')
+  inputDir.set(dockerStageDir)
+  dockerFile.set(dockerStageDir.map { it.file('Dockerfile') })
+  images.add("${project.group}/${jar.archiveBaseName.get()}:latest")
+}
+
+javadoc {
+  options.memberLevel = JavadocMemberLevel.PACKAGE
+  options.noQualifiers = ['all']
+}
+
+spotbugs {
+  effort = com.github.spotbugs.snom.Effort.MAX
   ignoreFailures = true
+  excludeFilter = file('config/spotbugs/exclude.xml')
 }
 
-tasks.withType(FindBugs) {
-  // TODO: Make sure this is not excluding GriffinControlManager
-  def excludeGriffinControl = 'com/turn/griffin/GriffinControl$'
-  def excludeGriffinData = 'com/turn/griffin/GriffinData$'
-  def excludeProtobufFiles = 'com/turn/protobufkafka/'
-  classes = classes.filter {
-      !( it.path.contains(excludeProtobufFiles) ||
-          it.path.contains(excludeGriffinControl) ||
-          it.path.contains(excludeGriffinData))
-  }
-
-  // Generate HTML output for findbugs
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
   reports {
-    xml.enabled = false
-    html.enabled = true
+    xml.required = false
+    html.required = true
   }
 }
-
 
 test {
-  // enable TestNG support (default is JUnit)
   useTestNG()
 
-  // listen to events in the test execution lifecycle
   beforeTest { descriptor ->
-    logger.lifecycle("Running test: " + descriptor)
+    logger.lifecycle('Running test: ' + descriptor)
   }
 
-  // listen to standard out and standard error of the test JVM(s)
   onOutput { descriptor, event ->
-    logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+    logger.lifecycle('Test: ' + descriptor + ' produced standard out/err: ' + event.message)
   }
-
 }
 
 /* vim: set ft=groovy */

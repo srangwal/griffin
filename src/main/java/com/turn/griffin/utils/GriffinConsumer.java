@@ -6,19 +6,25 @@
 package com.turn.griffin.utils;
 
 import com.google.common.base.Preconditions;
-import kafka.consumer.*;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.utils.ZKGroupDirs;
-import kafka.utils.ZkUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.errors.GroupIdNotFoundException;
+import org.apache.kafka.common.errors.InterruptException;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -34,128 +40,129 @@ public class GriffinConsumer {
 
     private static final Logger logger = LoggerFactory.getLogger(GriffinConsumer.class);
 
-    private ConsumerConnector consumer;
-    private String zkPath;
+    private String brokers;
     private String groupId;
     private String topicRegEx;
     private BlockingQueue<byte[]> msgQueue;
     private ExecutorService kafkaStreamsExecutor;
 
 
-    public GriffinConsumer(String zkPath, String groupId, String topicRegEx,
+    public GriffinConsumer(String brokers, String groupId, String topicRegEx,
                            int consolidationThreadCount, Properties props,
                            BlockingQueue<byte[]> msgQueue) {
 
-        Preconditions.checkState(!StringUtils.isBlank(zkPath), "Zookeeper path is not defined");
+        Preconditions.checkState(!StringUtils.isBlank(brokers), "Kafka brokers are not defined");
         Preconditions.checkState(!StringUtils.isBlank(groupId), "Group id is not defined");
         Preconditions.checkState(!StringUtils.isBlank(topicRegEx), "Topic is not defined");
         Preconditions.checkNotNull(msgQueue);
 
-        this.zkPath = zkPath;
+        this.brokers = brokers;
         this.groupId = groupId;
-
-        this.consumer = kafka.consumer.Consumer
-                .createJavaConsumerConnector(
-                        createConsumerConfig(this.zkPath, this.groupId, props));
-        Preconditions.checkNotNull(this.consumer);
         this.topicRegEx = topicRegEx;
         this.msgQueue = msgQueue;
 
-        this.run(consolidationThreadCount);
+        this.run(consolidationThreadCount, props);
     }
 
-    private static ConsumerConfig createConsumerConfig(String zkAddress,
-                                                       String groupId, Properties userProps) {
+    private static Properties createConsumerConfig(String brokers, String groupId, Properties userProps) {
         Properties props = new Properties();
-        props.put("zookeeper.connect", zkAddress);
-        props.put("zookeeper.session.timeout.ms", "30000");
-        props.put("zookeeper.connection.timeout.ms", "30000");
-        props.put("zookeeper.sync.time.ms", "6000");
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
 
-        props.put("group.id", groupId);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
 
-        props.put("auto.commit.enable", "true");
-        props.put("auto.commit.interval.ms", "300000");  // 5 min
-        props.put("rebalance.backoff.ms", "20000");
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+        props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "300000");  // 5 min
+        props.put(ConsumerConfig.RECONNECT_BACKOFF_MS_CONFIG, "20000");
 
         /* Add user specified properties */
         /* Should be the last line to allow overriding any of the properties above */
         props.putAll(userProps);
 
-        /* A hack to set the consumer offset to zero if the user specified smallest offset */
         if ("smallest".equals(props.get("auto.offset.reset"))) {
-            ZkUtils.maybeDeletePath(zkAddress, new ZKGroupDirs(groupId).consumerGroupDir());
+            props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         }
-        return new ConsumerConfig(props);
+        return props;
     }
 
-    private void run(int threadCount) {
-
-        /* Create set of streams */
-        List<KafkaStream<byte[], byte[]>> streams = this.consumer.createMessageStreamsByFilter(
-                new Whitelist(this.topicRegEx), threadCount);
+    private void run(int threadCount, Properties props) {
 
         /* Create a thread pool */
-        this.kafkaStreamsExecutor = Executors.newFixedThreadPool(streams.size());
+        this.kafkaStreamsExecutor = Executors.newFixedThreadPool(threadCount);
 
-        logger.debug(String.format("Consuming topic:%s with %s streams", this.topicRegEx, streams.size()));
-        for (KafkaStream<byte[], byte[]> stream : streams) {
-            kafkaStreamsExecutor.submit(new KafkaConsumer<>(stream, this.msgQueue));
+        logger.debug(String.format("Consuming topic:%s with %s streams", this.topicRegEx, threadCount));
+        for (int i = 0; i < threadCount; i++) {
+            kafkaStreamsExecutor.submit(new KafkaConsumer(createConsumerConfig(
+                    this.brokers, this.groupId, props), this.topicRegEx, this.msgQueue));
         }
     }
 
-    public void shutdown(boolean clearZK) {
-        this.consumer.shutdown();
-        /* A hack to clean up the consumer group in Zookeeper. Works only for consumer that are properly closed */
-        if (clearZK) {
-            ZkUtils.maybeDeletePath(this.zkPath, new ZKGroupDirs(this.groupId).consumerGroupDir());
-        }
+    public void shutdown(boolean clearGroup) {
         /* It is important to call shutdownNow so that blocking threads get an interrupt signal */
         this.kafkaStreamsExecutor.shutdownNow();
+        try {
+            this.kafkaStreamsExecutor.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (clearGroup) {
+            try (AdminClient adminClient = AdminClient.create(Collections.singletonMap(
+                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.brokers))) {
+                adminClient.deleteConsumerGroups(Collections.singleton(this.groupId)).all().get();
+            } catch (Exception e) {
+                if (!(e.getCause() instanceof GroupIdNotFoundException)) {
+                    logger.debug("Unable to delete Kafka consumer group " + this.groupId, e);
+                }
+            }
+        }
     }
 
-    public class KafkaConsumer<K, V> implements Runnable {
+    public class KafkaConsumer implements Runnable {
 
         private final Logger logger = LoggerFactory.getLogger(KafkaConsumer.class);
 
-        private KafkaStream<K, V> stream;
-        private BlockingQueue<V> msgQueue;
+        private org.apache.kafka.clients.consumer.KafkaConsumer<byte[], byte[]> consumer;
+        private String topicRegEx;
+        private BlockingQueue<byte[]> msgQueue;
 
-        public KafkaConsumer(KafkaStream<K, V> stream, BlockingQueue<V> msgQueue) {
-            this.stream = stream;
+        public KafkaConsumer(Properties props, String topicRegEx, BlockingQueue<byte[]> msgQueue) {
+            this.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
+            this.topicRegEx = topicRegEx;
             this.msgQueue = msgQueue;
         }
 
         public void run() {
-            ConsumerIterator<K, V> it = this.stream.iterator();
+            this.consumer.subscribe(Pattern.compile(this.topicRegEx));
 
             try {
-                while (it.hasNext()) {
+                while (true) {
                     if (isInterrupted())
                         break;
-                    V msg = it.next().message();
-                    this.msgQueue.put(msg);
+                    ConsumerRecords<byte[], byte[]> records = this.consumer.poll(Duration.ofMillis(1000));
+                    for (ConsumerRecord<byte[], byte[]> record: records) {
+                        this.msgQueue.put(record.value());
+                    }
                 }
             } catch (InterruptedException ie) {
-                /* it.hasNext() call blockingqueue.take and msgQueue.put() calls blockingqueue.put() both
-                   of which are blocking call that would throw InterruptedException. We should stop once we
-                   get this exception.
-                 */
                 logger.warn("GriffinConsumer interrupted. Stopping KafkaConsumer.");
-            } catch (ConsumerTimeoutException e) {
-                /* Continue; this is what the application wants us to do */
-                logger.warn("GriffinConsumer received ConsumerTimeoutException. Stopping KafkaConsumer.");
+            } catch (InterruptException ie) {
+                logger.warn("GriffinConsumer interrupted. Stopping KafkaConsumer.");
             } catch (Exception e) {
                 logger.info("Exception in KafkaConsumer", e);
+            } finally {
+                this.consumer.close();
             }
 
-            logger.debug(String.format("Shutting KafkaConsumer %s", stream.toString()));
+            logger.debug(String.format("Shutting KafkaConsumer for %s", this.topicRegEx));
         }
 
         private boolean isInterrupted() {
             boolean isInterrupted = Thread.currentThread().isInterrupted();
             if (isInterrupted) {
-                logger.debug(String.format("Kafka consumer thread interrupted %s", stream.toString()));
+                logger.debug(String.format("Kafka consumer thread interrupted %s", this.topicRegEx));
             }
             return isInterrupted;
 
