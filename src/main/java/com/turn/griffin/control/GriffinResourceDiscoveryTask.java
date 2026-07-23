@@ -27,10 +27,11 @@ import java.util.concurrent.TimeUnit;
  *
  * @author srangwala
  */
-public class GriffinResourceDiscoveryTask implements Runnable {
+public final class GriffinResourceDiscoveryTask implements Runnable {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinResourceDiscoveryTask.class);
     private static final Random RANDOM = new Random();
+    private static final Object NEXT_PROBE_LOCK = new Object();
     private static ScheduledFuture<?> NEXT_PROBE_FUTURE = null;
 
     private GriffinControlManager controlManager;
@@ -83,7 +84,7 @@ public class GriffinResourceDiscoveryTask implements Runnable {
 					/* Don't worry keep moving */
 					logger.warn("Failed to send SEND_GLOBAL_FILE_INFO", e);
 				}
-                scheduleNextResourceDiscovery();
+                scheduleNextResourceDiscovery(controlManager);
                 break;
 
             case PROCESS_GLOBAL_FILE_INFO:
@@ -110,7 +111,7 @@ public class GriffinResourceDiscoveryTask implements Runnable {
 
                     libCacheManager.updateLatestGlobalFileInfo(recvLatestFileInfo);
                     if (newInfoSubsumesReferenceInfo(libCacheManager.getLatestGlobalFileInfo().get(), recvLatestFileInfo)) {
-                        scheduleNextResourceDiscovery();
+                        scheduleNextResourceDiscovery(controlManager);
                     }
 
                 } catch (InvalidProtocolBufferException ipbe) {
@@ -133,12 +134,13 @@ public class GriffinResourceDiscoveryTask implements Runnable {
             Map<String, FileInfo> referenceFileInfo,
             Map<String, FileInfo> newFileInfo) {
 
-        for (String filename : referenceFileInfo.keySet()) {
+        for (Map.Entry<String, FileInfo> entry : referenceFileInfo.entrySet()) {
+            String filename = entry.getKey();
             if (newFileInfo.get(filename) == null) {
                 return false;
             }
 
-            FileInfo globalFileInfo = referenceFileInfo.get(filename);
+            FileInfo globalFileInfo = entry.getValue();
             FileInfo messageFileInfo = newFileInfo.get(filename);
             if (globalFileInfo.getVersion() > messageFileInfo.getVersion()) {
                 return false;
@@ -148,17 +150,19 @@ public class GriffinResourceDiscoveryTask implements Runnable {
     }
 
 
-    public synchronized void scheduleNextResourceDiscovery() {
+    public static void scheduleNextResourceDiscovery(GriffinControlManager controlManager) {
 
-        if (NEXT_PROBE_FUTURE != null) {
-            NEXT_PROBE_FUTURE.cancel(false);
+        synchronized (NEXT_PROBE_LOCK) {
+            if (NEXT_PROBE_FUTURE != null) {
+                NEXT_PROBE_FUTURE.cancel(false);
+            }
+
+            NEXT_PROBE_FUTURE = controlManager.scheduleControlJob(new GriffinResourceDiscoveryTask(
+                            controlManager, GriffinResourceDiscoveryTask.Action.SEND_GLOBAL_FILE_INFO),
+                    GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS /2 +
+                            RANDOM.nextInt(GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS),
+                    TimeUnit.MILLISECONDS);
         }
-
-        NEXT_PROBE_FUTURE = controlManager.scheduleControlJob(new GriffinResourceDiscoveryTask(
-                        controlManager, GriffinResourceDiscoveryTask.Action.SEND_GLOBAL_FILE_INFO),
-                GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS /2 +
-                        RANDOM.nextInt(GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS),
-                TimeUnit.MILLISECONDS);
     }
 
     public enum Action {

@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  * @author srangwala
  */
 
-public class GriffinConsumer {
+public final class GriffinConsumer {
 
     private static final Logger logger = LoggerFactory.getLogger(GriffinConsumer.class);
 
@@ -119,7 +119,7 @@ public class GriffinConsumer {
         }
     }
 
-    public class KafkaConsumer implements Runnable {
+    public static final class KafkaConsumer implements Runnable {
 
         private final Logger logger = LoggerFactory.getLogger(KafkaConsumer.class);
 

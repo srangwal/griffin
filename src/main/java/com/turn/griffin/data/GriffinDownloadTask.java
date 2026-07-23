@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author srangwala
  */
 
-public class GriffinDownloadTask implements Runnable {
+public final class GriffinDownloadTask implements Runnable {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinDownloadTask.class);
 

@@ -4,9 +4,22 @@
     <Class name="~com\.turn\.protobufkafka\..*" />
   </Match>
   <Match>
+    <Class name="com.turn.protobufkafka.ProtoBufKafka" />
+  </Match>
+  <Match>
+    <Class name="com.turn.griffin.GriffinControl" />
+  </Match>
+  <Match>
     <Class name="~com\.turn\.griffin\.GriffinControl\$.*" />
   </Match>
   <Match>
+    <Class name="com.turn.griffin.GriffinData" />
+  </Match>
+  <Match>
     <Class name="~com\.turn\.griffin\.GriffinData\$.*" />
+  </Match>
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP2" />
+    <Class name="~com\.turn\.griffin\..*" />
   </Match>
 </FindBugsFilter>

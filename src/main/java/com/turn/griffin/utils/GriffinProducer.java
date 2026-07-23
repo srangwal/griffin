@@ -5,7 +5,6 @@
  **/
 package com.turn.griffin.utils;
 
-import com.google.common.base.Charsets;
 import com.google.protobuf.Message;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -15,9 +14,12 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
@@ -39,7 +41,7 @@ public class GriffinProducer {
     }
 
     public GriffinProducer(String brokers, String partitioner) {
-        Properties props = new Properties();
+        Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
@@ -61,7 +63,7 @@ public class GriffinProducer {
     }
 
     public void send(String topic, String key, Message message) {
-        sendRecord(new ProducerRecord<>(topic, key.getBytes(Charsets.UTF_8), message.toByteArray()));
+        sendRecord(new ProducerRecord<>(topic, key.getBytes(StandardCharsets.UTF_8), message.toByteArray()));
     }
 
     public void send(String topic, List<Message> messages) {
@@ -78,7 +80,7 @@ public class GriffinProducer {
     }
 
     public void shutdown() {
-        this.producer.close();
+        this.producer.close(Duration.ofMillis(Long.MAX_VALUE));
     }
 
     private void sendRecord(ProducerRecord<byte[], byte[]> record) {

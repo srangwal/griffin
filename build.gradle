@@ -18,6 +18,7 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
   options.release = 17
+  options.compilerArgs += ['-Xlint:deprecation']
 }
 
 application {
@@ -29,23 +30,23 @@ repositories {
 }
 
 dependencies {
-  testImplementation group: 'org.testng', name: 'testng', version: '7.12.0'
+  testImplementation 'org.testng:testng:7.12.0'
 
-  implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
-  implementation group: 'com.google.guava', name: 'guava', version: '33.6.0-jre'
-  implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6+'
-  implementation group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.10.8'
+  implementation 'com.google.code.findbugs:jsr305:3.0.2'
+  implementation 'com.google.guava:guava:33.6.0-jre'
+  implementation 'org.slf4j:slf4j-log4j12:1.7.6+'
+  implementation 'org.xerial.snappy:snappy-java:1.1.10.8'
 
-  implementation group: 'commons-io', name: 'commons-io', version: '2.22.0'
-  implementation group: 'commons-codec', name: 'commons-codec', version: '1.22.0'
-  implementation group: 'org.apache.commons', name: 'commons-email', version: '1.6.0'
-  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
-  implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.28.0'
+  implementation 'commons-io:commons-io:2.22.0'
+  implementation 'commons-codec:commons-codec:1.22.0'
+  implementation 'org.apache.commons:commons-email:1.6.0'
+  implementation 'org.apache.commons:commons-lang3:3.20.0'
+  implementation 'org.apache.commons:commons-compress:1.28.0'
 
-  implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '4.35.1'
-  implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '4.3.1'
-  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc', version: '4.1.0'
-  implementation group: 'com.google.code.gson', name: 'gson', version: '2.14.0'
+  implementation 'com.google.protobuf:protobuf-java:4.35.1'
+  implementation 'org.apache.kafka:kafka-clients:4.3.1'
+  implementation 'org.springframework.boot:spring-boot-starter-webmvc:4.1.0'
+  implementation 'com.google.code.gson:gson:2.14.0'
 }
 
 configurations.all {
@@ -100,7 +101,7 @@ javadoc {
 
 spotbugs {
   effort = com.github.spotbugs.snom.Effort.MAX
-  ignoreFailures = true
+  ignoreFailures = false
   excludeFilter = file('config/spotbugs/exclude.xml')
 }
 
@@ -113,14 +114,6 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
 
 test {
   useTestNG()
-
-  beforeTest { descriptor ->
-    logger.lifecycle('Running test: ' + descriptor)
-  }
-
-  onOutput { descriptor, event ->
-    logger.lifecycle('Test: ' + descriptor + ' produced standard out/err: ' + event.message)
-  }
 }
 
 /* vim: set ft=groovy */

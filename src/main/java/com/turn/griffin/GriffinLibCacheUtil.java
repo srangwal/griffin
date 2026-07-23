@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * Class that manages the lib cache
  * @author srangwala
  */
-public class GriffinLibCacheUtil {
+public final class GriffinLibCacheUtil {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinLibCacheUtil.class);
 
@@ -288,8 +288,12 @@ public class GriffinLibCacheUtil {
 
     private long getLatestLocalVersion(String dir) {
 
-        File ObjDir = new File(dir);
-        List<File> versions = Arrays.asList(ObjDir.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY));
+        File objDir = new File(dir);
+        File[] versionFiles = objDir.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        if (versionFiles == null || versionFiles.length == 0) {
+            return 0;
+        }
+        List<File> versions = Arrays.asList(versionFiles);
         String latest = Collections.max(versions,
                 new Comparator<File>() {
                     @Override
@@ -339,7 +343,11 @@ public class GriffinLibCacheUtil {
     public void deleteExpiredVersions(File file, int versionsToKeep) {
 
         /* Get list of all versions of the file in cache pointed to by file */
-        List<File> fileVersions = Arrays.asList(file.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY));
+        File[] versionFiles = file.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        if (versionFiles == null) {
+            return;
+        }
+        List<File> fileVersions = Arrays.asList(versionFiles);
 
         if (fileVersions.size() <= versionsToKeep) {
             return;
@@ -378,7 +386,11 @@ public class GriffinLibCacheUtil {
     }
 
     public List<File> getLocalFileList() {
-        return Arrays.asList(new File(getLibCacheDirectory()).listFiles((FileFilter) DirectoryFileFilter.DIRECTORY));
+        File[] localFiles = new File(getLibCacheDirectory()).listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        if (localFiles == null) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(localFiles);
     }
 
     public Map<String, String> getLocalFileLatestVersion() {
@@ -388,7 +400,11 @@ public class GriffinLibCacheUtil {
         Map<String, File> localFileMap = getLocalFileMap();
         for (Map.Entry<String, File> entry : localFileMap.entrySet()) {
 
-            List<File> fileVersions = Arrays.asList(entry.getValue().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY));
+            File[] versionFiles = entry.getValue().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+            if (versionFiles == null || versionFiles.length == 0) {
+                continue;
+            }
+            List<File> fileVersions = Arrays.asList(versionFiles);
 
             List<String> versions = new ArrayList<>(Collections2.transform(fileVersions,
                     new Function<File, String>() {

@@ -35,14 +35,14 @@ import java.util.regex.Pattern;
  *
  * @author srangwala
  */
-public class GriffinDownloadManager implements Runnable {
+public final class GriffinDownloadManager implements Runnable {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinDownloadManager.class);
 
     private static final String SEPARATOR = "-";
     private static final Random RANDOM = new Random();
-    private final String MODULENAME = "turn.griffin";
-    private final String METRICNAME = "cache";
+    private static final String MODULENAME = "turn.griffin";
+    private static final String METRICNAME = "cache";
     private final int deleteTopicsEveryNRuns;
 
 
@@ -62,8 +62,10 @@ public class GriffinDownloadManager implements Runnable {
 
         try {
             /* Clear up finished or cancelled downloads */
-            for (String key : ONGOING_DOWNLOADS.keySet()) {
-                if (ONGOING_DOWNLOADS.get(key).isCancelled() || ONGOING_DOWNLOADS.get(key).isDone()) {
+            for (Map.Entry<String, ScheduledFuture<?>> entry : ONGOING_DOWNLOADS.entrySet()) {
+                String key = entry.getKey();
+                ScheduledFuture<?> future = entry.getValue();
+                if (future.isCancelled() || future.isDone()) {
                     logger.info(String.format("Finished download: %s", key));
                     ONGOING_DOWNLOADS.remove(key);
                 } else {

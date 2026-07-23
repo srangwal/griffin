@@ -19,13 +19,16 @@ has never been used in a production setting across **multiple** data centers.
 ## Quickstart with Docker
 **Requires**
 - Docker 1.8+
-- Docker compose (https://docs.docker.com/compose/install/)
+- A running Docker daemon
+- The legacy `docker-compose` command (https://docs.docker.com/compose/install/)
+- Java 17, if building the image locally
 
 ### Starting a full cluster using docker-compose
 A `docker-compose.yml` to create a full cluster of zookeeper, kafka, and griffin is included in this repository. To
 create a cluster, update `KAFKA_ADVERTISED_HOST_NAME` in `docker-compose.yml` to the IP address of the host machine
-(linux box) and start the cluster as
+(linux box), build the local Griffin image, and start the cluster as
 ```sh
+./gradlew buildDocker
 docker-compose up -d
 docker-compose scale kafkalax1=3
 docker-compose scale griffinlax1=3
@@ -46,7 +49,7 @@ We will now upload a file(`build.gradle`) to one of the griffin node, namely `gr
 replicate it to all the other griffin nodes (`dest='.*'`). We would like this file to be named `gradle`
 (`blobname=gradle`) on all the griffin nodes.
 ```sh
-curl -i# -F blobname=gradle -F dest='.*' -F file=@build.gradle http://$(docker port griffin_griffinlax1_1 8080)/griffin/localrepo
+curl -i -F blobname=gradle -F dest='.*' -F file=@build.gradle http://$(docker port griffin_griffinlax1_1 8080)/griffin/localrepo
 ```
 
 We can now observe (after a short delay) that the file is available at all griffin nodes
@@ -83,7 +86,7 @@ Push a given file to the specified set of machines
 |dest|string|true|A regular expression specifying the destination. This blob will be downloaded by any server whose ```serverid``` matches the regex|
 |file|form|true|Multi-part content specifying the data bytes|
 
-### GET /missing
+### GET /missingfiles
 List all the files in global repository that is supposed to be in the local repository but has not
 yet been download
 
@@ -100,15 +103,21 @@ TODO: _Component design and description_
 ### Build
 
 #### Requirements
-- Gradle 2.5+
-- protoc 2.5+
-- Java 1.7
+- Java 17
+- The checked-in Gradle wrapper. It downloads Gradle 9.6.1 when needed.
+- No system `protoc` install is required; Gradle downloads `protoc` 4.35.1.
 
-Prepare a single griffin fat jar with
+Prepare a Griffin jar with
 ```sh
-gradle build
+./gradlew build
 ```
-Fat jar is available at `./build/libs/griffin-*.jar`. Include this jar in your application's library folder to use griffin.
+The executable Spring Boot jar is available at `./build/libs/griffin-0.1.0.jar`.
+Include `./build/libs/griffin-0.1.0-plain.jar` in your application's library folder if you use Griffin as a library.
+
+To build the Docker image used by `docker-compose.yml`, run:
+```sh
+./gradlew buildDocker
+```
 
 
 ### Running Griffin
@@ -137,17 +146,17 @@ services that share the same `dcname`
 Open two terminals. In first terminal start the first instance of griffin as
 ```sh
 cd examples
-java -jar ../build/libs/griffin-*.jar
+java -jar ../build/libs/griffin-0.1.0.jar
 ```
 
-In second terminal change `serverid` in `examples/griffin.conf` to `griffin-2` and `server.port` in
-`examples/application.properties` to `8081` and start another instance of griffin as
+In second terminal change `serverid` in `examples/griffin.conf` to `griffin-2` and start another instance of griffin on
+port `8081` as
 ```sh
 cd examples
-java -jar ../build/libs/griffin-*.jar
+java -jar ../build/libs/griffin-0.1.0.jar --server.port=8081
 ```
 
-In yet another terminal we can interact with these griffin services. We will push a file to one instance of griffin and
+From the repository root in yet another terminal, we can interact with these griffin services. We will push a file to one instance of griffin and
 we will observe it getting replicated to another instance of griffin.
 First we can observe that both instances for griffin does not contain any file in their local repository
 ```sh
@@ -170,14 +179,11 @@ Check out REST API section for full description of rest calls above.
 
 ## Javadoc
 ```sh
-gradle javadoc
+./gradlew javadoc
 ```
 Javadocs are generated in `./build/docs/javadoc/index.html`.
 
 
 
 ## Notes
-- The first incarnation of Griffin was written for Java 6. So while the current version of Griffin
-requires Java 7, it does not fully leverage all the new features of Java 7.
-
-
+- The first incarnation of Griffin was written for Java 6. The current build targets Java 17.

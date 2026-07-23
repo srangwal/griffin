@@ -25,9 +25,10 @@ import java.util.concurrent.TimeUnit;
  *
  * @author  srangwala
  */
-public class GriffinDataManager {
+public final class GriffinDataManager {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinDataManager.class);
+    private static final Random RANDOM = new Random();
 
     /* This parameter is critical for the proper functioning of Griffin. This
      * value should be equal to the max number of simultaneous files (collectively)
@@ -57,7 +58,7 @@ public class GriffinDataManager {
 
         logger.info(String.format("Starting Download manager every %s ms", NEWFILE_CHECK_INTERVAL_MS));
         this.dataDownloadThreadPool.scheduleWithFixedDelay(
-                new GriffinDownloadManager(this), new Random().nextInt(NEWFILE_CHECK_INTERVAL_MS),
+                new GriffinDownloadManager(this), RANDOM.nextInt(NEWFILE_CHECK_INTERVAL_MS),
                 NEWFILE_CHECK_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 

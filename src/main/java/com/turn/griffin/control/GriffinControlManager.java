@@ -29,7 +29,7 @@ import java.util.concurrent.*;
  * Manager that listens for messages on the control channel and schedules action to process it.
 * @author srangwala
 */
-public class GriffinControlManager implements Runnable {
+public final class GriffinControlManager implements Runnable {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinControlManager.class);
 
@@ -54,7 +54,8 @@ public class GriffinControlManager implements Runnable {
                             "on griffin's control channel",
                     1000, 100, 10000).getValue();
 
-    private final int NOW = 0; // Wait time for task that needs to be executed immediately
+    private static final int NOW = 0; // Wait time for task that needs to be executed immediately
+    private static final Random RANDOM = new Random();
 
     private GriffinModule griffinModule;
     private GriffinConsumer controlConsumer;
@@ -90,7 +91,7 @@ public class GriffinControlManager implements Runnable {
 
         /* Start resource discovery */
         scheduleControlJob(new GriffinResourceDiscoveryTask(this, GriffinResourceDiscoveryTask.Action.SEND_GLOBAL_FILE_INFO),
-                new Random().nextInt(GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS), TimeUnit.MILLISECONDS);
+                RANDOM.nextInt(GriffinModule.RESOURCE_DISCOVERY_INTERVAL_MS), TimeUnit.MILLISECONDS);
 
 
         /* A thread to create suitable runnable for incoming control messages */

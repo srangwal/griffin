@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Module to select a leader to decide an uploader of a file
  * @author srangwala
  */
-public class GriffinLeaderSelectionTask implements  Runnable {
+public final class GriffinLeaderSelectionTask implements  Runnable {
 
     protected static final Logger logger = LoggerFactory.getLogger(GriffinLeaderSelectionTask.class);
 
@@ -251,21 +251,24 @@ public class GriffinLeaderSelectionTask implements  Runnable {
 
     private void clearFinishedJobs() {
 
-        for (String key : LEADER.keySet()) {
-            if (LEADER.get(key).isCancelled() || LEADER.get(key).isDone()) {
-                LEADER.remove(key);
+        for (Map.Entry<String, ScheduledFuture<?>> entry : LEADER.entrySet()) {
+            ScheduledFuture<?> future = entry.getValue();
+            if (future.isCancelled() || future.isDone()) {
+                LEADER.remove(entry.getKey());
             }
         }
 
-        for (String key : CANDIDATE.keySet()) {
-            if (CANDIDATE.get(key).isCancelled() || CANDIDATE.get(key).isDone()) {
-                CANDIDATE.remove(key);
+        for (Map.Entry<String, ScheduledFuture<?>> entry : CANDIDATE.entrySet()) {
+            ScheduledFuture<?> future = entry.getValue();
+            if (future.isCancelled() || future.isDone()) {
+                CANDIDATE.remove(entry.getKey());
             }
         }
 
-        for (String key : FOLLOWER.keySet()) {
-            if (FOLLOWER.get(key).isCancelled() || FOLLOWER.get(key).isDone()) {
-                FOLLOWER.remove(key);
+        for (Map.Entry<String, ScheduledFuture<?>> entry : FOLLOWER.entrySet()) {
+            ScheduledFuture<?> future = entry.getValue();
+            if (future.isCancelled() || future.isDone()) {
+                FOLLOWER.remove(entry.getKey());
             }
         }
     }

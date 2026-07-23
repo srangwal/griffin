@@ -31,7 +31,7 @@ import java.util.List;
         - A list of a subset of Apache Kakfa brokers such that at least one of them is online at any given time
         - Auto topic creation enabled on Apache Kafka brokers
  */
-public class GriffinModule implements Griffin {
+public final class GriffinModule implements Griffin {
 
     public static final Logger logger = LoggerFactory.getLogger(GriffinModule.class);
     public static final String PROPERTY_PREFIX = "Griffin.";
@@ -104,7 +104,7 @@ public class GriffinModule implements Griffin {
         }
     }
 
-    public synchronized void shutdown() {
+    public void shutdown() {
 
         if (this.controlManager.isPresent()) {
             this.controlManager.get().shutdown();
