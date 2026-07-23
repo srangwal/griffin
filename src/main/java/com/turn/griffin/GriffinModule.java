@@ -43,11 +43,6 @@ public class GriffinModule implements Griffin {
                     "How often the global view is broadcast on the control channel (in ms)",
                     60000, 10000, 600000).getValue();
 
-    /* Comma separated Zookeeper server list */
-    public static final String ZOOKEEPER =
-            GriffinConfig.getProperty(PROPERTY_PREFIX + "ZkServers",
-                    System.getenv("ZK_PORT_2181_TCP_ADDR") + ":2181");
-
     /* Comma separated broker list */
     public static final String BROKERS =
             GriffinConfig.getProperty(PROPERTY_PREFIX + "KafkaBrokersList",
@@ -93,7 +88,6 @@ public class GriffinModule implements Griffin {
 
         populateLocalVariables();
         Preconditions.checkState(!StringUtils.isBlank(this.myServerId), "Server id is not defined");
-        Preconditions.checkState(!StringUtils.isBlank(ZOOKEEPER), "Zookeeper is not defined");
         Preconditions.checkState(!StringUtils.isBlank(BROKERS), "Brokers are not defined");
 
         this.libCacheManager = Optional.of(new GriffinLibCacheUtil(getMyServerId()));

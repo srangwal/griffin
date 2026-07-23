@@ -18,8 +18,8 @@ import com.turn.griffin.utils.GriffinConsumer;
 import com.turn.griffin.utils.GriffinKafkaTopicNameUtil;
 import com.turn.griffin.utils.GriffinProducer;
 import com.turn.griffin.utils.GriffinRangedIntConfig;
-import kafka.common.FailedToSendMessageException;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.kafka.common.KafkaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +86,7 @@ public class GriffinUploadTask implements Runnable {
                             UUID.randomUUID().toString()});
             String dataTopicNameForConsumer = GriffinKafkaTopicNameUtil.getDataTopicNameForConsumer(filename, fileVersion);
 
-            consumer = Optional.fromNullable(new GriffinConsumer(GriffinModule.ZOOKEEPER, consumerGroupId,
+            consumer = Optional.fromNullable(new GriffinConsumer(GriffinModule.BROKERS, consumerGroupId,
                     dataTopicNameForConsumer, GriffinDownloadTask.DOWNLOAD_THREAD_COUNT, properties, dataQueue));
 
 
@@ -167,10 +167,10 @@ public class GriffinUploadTask implements Runnable {
                     producer.send(dataTopicNameForProducer, DigestUtils.md5Hex(buffer), msg);
                     availableBlockBitmap.set(blockToUpload);
                     uploadAttempts = 0;
-                } catch (FailedToSendMessageException ftsme) {
+                } catch (KafkaException ke) {
                     /* Retry the same block again */
                     logger.warn(String.format("Unable to send block %s for file: %s version: %s " +
-                            "due to FailedToSendMessageException", blockToUpload, filename, fileVersion));
+                            "due to KafkaException", blockToUpload, filename, fileVersion));
                     uploadAttempts++;
                 } catch (Exception e) {
                     logger.warn(String.format("Unable to send block %s for file: %s version: %s",

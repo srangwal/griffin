@@ -16,7 +16,7 @@ import com.turn.griffin.control.GriffinLeaderSelectionTask;
 import com.turn.griffin.utils.GriffinConsumer;
 import com.turn.griffin.utils.GriffinKafkaTopicNameUtil;
 import com.turn.griffin.utils.GriffinRangedIntConfig;
-import org.I0Itec.zkclient.exception.ZkTimeoutException;
+import org.apache.kafka.common.KafkaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,12 +191,12 @@ public class GriffinDownloadTask implements Runnable {
 
         } catch (InterruptedException ie) {
             /* Stop if we are interrupted */
-        } catch (ZkTimeoutException zkte) {
-            logger.warn(String.format("Unable to download %s %s", filename, fileVersion), zkte);
+        } catch (KafkaException ke) {
+            logger.warn(String.format("Unable to download %s %s", filename, fileVersion), ke);
             String subject = String.format("WARNING: GriffinDownloadTask failed for blob:%s", filename);
             String body = String.format("Action: GriffinDownloadTask failed for blob:%s version:%s%n" +
-                            "Reason: Unable to connect to Zookeeper%n %s", filename, fileVersion,
-                    Throwables.getStackTraceAsString(zkte));
+                            "Reason: Unable to connect to Kafka%n %s", filename, fileVersion,
+                    Throwables.getStackTraceAsString(ke));
             GriffinModule.emailAlert(subject, body);
 
         } catch (Exception e) {
@@ -241,8 +241,8 @@ public class GriffinDownloadTask implements Runnable {
         String consumerGroupId = getConsumerGroupId(filename, fileVersion);
         String dataTopic =  GriffinKafkaTopicNameUtil.getDataTopicNameForConsumer(filename, fileVersion);
 
-        Preconditions.checkNotNull(GriffinModule.ZOOKEEPER);
-        return Optional.of(new GriffinConsumer(GriffinModule.ZOOKEEPER, consumerGroupId, dataTopic,
+        Preconditions.checkNotNull(GriffinModule.BROKERS);
+        return Optional.of(new GriffinConsumer(GriffinModule.BROKERS, consumerGroupId, dataTopic,
                 DOWNLOAD_THREAD_COUNT, properties, dataQueue));
     }
 }

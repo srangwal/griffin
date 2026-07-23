@@ -13,14 +13,15 @@ import com.turn.griffin.GriffinControl.FileInfo;
 import com.turn.griffin.GriffinLibCacheUtil;
 import com.turn.griffin.GriffinModule;
 import com.turn.griffin.utils.GriffinKafkaTopicNameUtil;
-import kafka.admin.AdminUtils;
-import kafka.utils.ZkUtils;
-import org.I0Itec.zkclient.ZkClient;
-import org.I0Itec.zkclient.exception.ZkNodeExistsException;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -72,7 +73,7 @@ public class GriffinDownloadManager implements Runnable {
             }
 
             /* Delete kafka topics of expired versions. Do it very infrequently (approx once every day )
-            since it needs to connect to zookeeper and a delay in removing the topics is OK */
+            since it needs to connect to Kafka and a delay in removing the topics is OK */
             boolean deleteExpiredKafkaTopics = RANDOM.nextInt(deleteTopicsEveryNRuns) == 0;
             /* Clear older versions*/
             deleteExpiredVersions(deleteExpiredKafkaTopics);
@@ -127,18 +128,20 @@ public class GriffinDownloadManager implements Runnable {
     private void deleteExpiredKafkaTopics(GriffinLibCacheUtil libCacheManager) {
 
         /* Delete Kafka topics of all expired versions */
-        Optional<ZkClient> zkClient = Optional.of(new ZkClient(GriffinModule.ZOOKEEPER, 30000, 30000));
-        List<String> topicList =
-                scala.collection.JavaConversions.seqAsJavaList(ZkUtils.getAllTopics(zkClient.get()));
-        for(Map.Entry<String, String> entry : libCacheManager.getLocalFileLatestVersion().entrySet()) {
-            /* Delete all versions in kafka except the latest version */
-            deleteKafkaTopics(zkClient.get(), topicList, entry.getKey(), entry.getValue());
+        try (AdminClient adminClient = AdminClient.create(Collections.singletonMap(
+                AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, GriffinModule.BROKERS))) {
+            List<String> topicList = new ArrayList<>(adminClient.listTopics().names().get());
+            for(Map.Entry<String, String> entry : libCacheManager.getLocalFileLatestVersion().entrySet()) {
+                /* Delete all versions in kafka except the latest version */
+                deleteKafkaTopics(adminClient, topicList, entry.getKey(), entry.getValue());
+            }
+        } catch (Exception e) {
+            logger.error("Unable to list kafka topics", e);
         }
-        zkClient.get().close();
     }
 
     /* Delete all topics in Kafka for versions older than the specified version */
-    private void deleteKafkaTopics(final ZkClient zkClient, final List<String> topicList,
+    private void deleteKafkaTopics(final AdminClient adminClient, final List<String> topicList,
                                    final String filename, final String version) {
 
         final String topicPattern = GriffinKafkaTopicNameUtil.getDataTopicNamePattern(filename);
@@ -157,15 +160,17 @@ public class GriffinDownloadManager implements Runnable {
         for (String topic: topicsToDelete) {
             logger.info("Deleting kafka topic:" + topic);
             try {
-                AdminUtils.deleteTopic(zkClient, topic);
-            } catch (ZkNodeExistsException zknee) {
-                /* 0.8.2-beta has an issue that topics can reappear after they are deleted. Even with
-                   correct implementation deleted topics can reappear because we operate with auto-topic
-                   creation enabled in kafka. Furthermore, multiple nodes might try to delete the topic
-                   at the same time, which will cause this exception to be thrown. Since there is no
-                   harm in multiple deletion ignore this exception.
+                adminClient.deleteTopics(Collections.singleton(topic)).all().get();
+            } catch (Exception e) {
+                /* Deleted topics can reappear because we operate with auto-topic creation enabled in kafka.
+                   Furthermore, multiple nodes might try to delete the topic at the same time. Since there is
+                   no harm in multiple deletion ignore topic-not-found errors.
                  */
-                logger.warn(String.format("Topic deletion of topic %s after it has been deleted", topic));
+                if (e.getCause() instanceof UnknownTopicOrPartitionException) {
+                    logger.warn(String.format("Topic deletion of topic %s after it has been deleted", topic));
+                } else {
+                    logger.warn(String.format("Unable to delete kafka topic %s", topic), e);
+                }
             }
         }
     }

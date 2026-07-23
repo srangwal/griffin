@@ -67,9 +67,7 @@ public class GriffinControlManager implements Runnable {
         Preconditions.checkNotNull(griffinModule);
         this.griffinModule = griffinModule;
 
-        Preconditions.checkState(!StringUtils.isBlank(GriffinModule.ZOOKEEPER), "Zookeeper is not defined");
         Preconditions.checkState(!StringUtils.isBlank(GriffinModule.BROKERS), "Brokers are not defined");
-        String zookeeper = GriffinModule.ZOOKEEPER;
         String brokers = GriffinModule.BROKERS;
 
         /* Start the consumer before the producer to trigger topic creation */
@@ -80,7 +78,7 @@ public class GriffinControlManager implements Runnable {
         /* The groupId should be unique to avoid conflict with other consumers running on this machine */
         String consumerGroupId = GriffinKafkaTopicNameUtil.getControlTopicConsumerGroupId(
                 new String[]{getMyServerId(), this.getClass().getSimpleName()});
-        this.controlConsumer = new GriffinConsumer(zookeeper,
+        this.controlConsumer = new GriffinConsumer(brokers,
                 consumerGroupId, GriffinKafkaTopicNameUtil.getControlTopicNameForConsumer(),
                 CONTROL_TOPIC_CONSUMER_THREADS, new Properties(), incomingCntrlMsgQueue);
 
